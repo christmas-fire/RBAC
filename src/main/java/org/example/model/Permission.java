@@ -1,16 +1,16 @@
 package org.example.model;
 
+import org.example.util.ValidationUtils;
+
 public record Permission(String name, String resource, String description) {
     public Permission(String name, String resource, String description) {
-        if (description == null || description.isBlank()) {
-            throw new IllegalArgumentException("Описание не может быть пустым");
-        }
-        if (name == null || name.contains(" ")) {
-            throw new IllegalArgumentException("Имя права не должно содержать пробелов");
-        }
-        this.name = name.toUpperCase();
-        this.resource = resource != null ? resource.toLowerCase() : "";
-        this.description = description;
+        ValidationUtils.requireNonEmpty(name, "Имя права");
+        ValidationUtils.requireNonEmpty(resource, "Ресурс");
+        ValidationUtils.requireNonEmpty(description, "Описание");
+
+        this.name = ValidationUtils.normalizeString(name).toUpperCase();
+        this.resource = ValidationUtils.normalizeString(resource).toLowerCase();
+        this.description = ValidationUtils.normalizeString(description);
     }
 
     public String format() {

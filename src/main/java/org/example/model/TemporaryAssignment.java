@@ -1,5 +1,7 @@
 package org.example.model;
 
+import org.example.util.ValidationUtils;
+
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -11,6 +13,10 @@ public class TemporaryAssignment extends AbstractRoleAssignment {
 
     public TemporaryAssignment(User user, Role role, AssignmentMetadata metadata, String expiresAt, boolean autoRenew) {
         super(user, role, metadata);
+
+        if (!ValidationUtils.isValidDate(expiresAt)) {
+            throw new IllegalArgumentException("Дата должна быть в формате YYYY-MM-DD или YYYY-MM-DD HH:mm");
+        }
         this.expiresAt = expiresAt;
         this.autoRenew = autoRenew;
     }
