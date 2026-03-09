@@ -3,6 +3,8 @@ package org.example.command;
 import org.example.audit.AuditLog;
 import org.example.manager.*;
 import org.example.model.*;
+import org.example.report.ReportGenerator;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -11,6 +13,7 @@ public class RBACSystem {
     private final RoleManager roleManager = new RoleManager();
     private final AssignmentManager assignmentManager = new AssignmentManager();
     private final AuditLog auditLog = new AuditLog();
+    private final ReportGenerator reportGenerator = new ReportGenerator();
 
     private String currentUser = "system";
 
@@ -92,4 +95,6 @@ public class RBACSystem {
     }
 
     public AuditLog getAuditLog() { return auditLog; }
+
+    public ReportGenerator getReportGenerator() { return reportGenerator; }
 }

@@ -471,13 +471,13 @@ public class CommandRegistry {
                 case "2" -> {
                     System.out.print("Введите имя исполнителя: ");
                     String perf = scanner.nextLine();
-                    List<org.example.rbac.audit.AuditEntry> entries = system.getAuditLog().getByPerformer(perf);
+                    List<org.example.audit.AuditEntry> entries = system.getAuditLog().getByPerformer(perf);
                     entries.forEach(e -> System.out.println(e));
                 }
                 case "3" -> {
                     System.out.print("Введите действие (напр. USER_CREATE): ");
                     String act = scanner.nextLine();
-                    List<org.example.rbac.audit.AuditEntry> entries = system.getAuditLog().getByAction(act);
+                    List<org.example.audit.AuditEntry> entries = system.getAuditLog().getByAction(act);
                     entries.forEach(e -> System.out.println(e));
                 }
                 case "4" -> {
@@ -486,6 +486,39 @@ public class CommandRegistry {
                     system.getAuditLog().saveToFile(file);
                 }
                 default -> System.out.println("Неверный выбор.");
+            }
+        });
+
+        parser.registerCommand("report-users", "Отчёт по пользователям и их ролям", (scanner, system) -> {
+            String report = system.getReportGenerator().generateUserReport(system.getUserManager(), system.getAssignmentManager());
+            System.out.println(report);
+
+            System.out.print("Сохранить в файл? (да/нет): ");
+            if (scanner.nextLine().equalsIgnoreCase("да")) {
+                System.out.print("Имя файла (напр. users.txt): ");
+                system.getReportGenerator().exportToFile(report, scanner.nextLine());
+            }
+        });
+
+        parser.registerCommand("report-roles", "Отчёт по популярности ролей", (scanner, system) -> {
+            String report = system.getReportGenerator().generateRoleReport(system.getRoleManager(), system.getAssignmentManager());
+            System.out.println(report);
+
+            System.out.print("Сохранить в файл? (да/нет): ");
+            if (scanner.nextLine().equalsIgnoreCase("да")) {
+                System.out.print("Имя файла (напр. roles.txt): ");
+                system.getReportGenerator().exportToFile(report, scanner.nextLine());
+            }
+        });
+
+        parser.registerCommand("report-matrix", "Матрица доступа (Юзеры x Ресурсы)", (scanner, system) -> {
+            String report = system.getReportGenerator().generatePermissionMatrix(system.getUserManager(), system.getAssignmentManager());
+            System.out.println(report);
+
+            System.out.print("Сохранить в файл? (да/нет): ");
+            if (scanner.nextLine().equalsIgnoreCase("да")) {
+                System.out.print("Имя файла (напр. matrix.txt): ");
+                system.getReportGenerator().exportToFile(report, scanner.nextLine());
             }
         });
     }
