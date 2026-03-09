@@ -2,6 +2,8 @@ package org.example.command;
 
 import org.example.filter.*;
 import org.example.model.*;
+import org.example.util.ConsoleUtils;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -13,14 +15,15 @@ public class CommandRegistry {
         });
 
         parser.registerCommand("user-create", "Создать пользователя", (scanner, system) -> {
-            System.out.print("Username: "); String un = scanner.nextLine();
-            System.out.print("Full Name: "); String fn = scanner.nextLine();
-            System.out.print("Email: "); String em = scanner.nextLine();
+            String un = ConsoleUtils.promptString(scanner, "Введите username", true);
+            String fn = ConsoleUtils.promptString(scanner, "Введите полное имя", true);
+            String em = ConsoleUtils.promptString(scanner, "Введите email", true);
+
             try {
                 User user = User.validate(un, fn, em);
                 system.getUserManager().add(user);
-                system.getAuditLog().log("USER_CREATE", system.getCurrentUser(), un, "Создан новый профиль");
-                System.out.println("Пользователь создан.");
+                system.getAuditLog().log("USER_CREATE", system.getCurrentUser(), un, "Успех");
+                System.out.println("Пользователь успешно создан.");
             } catch (Exception e) {
                 System.out.println("Ошибка: " + e.getMessage());
             }
@@ -47,15 +50,14 @@ public class CommandRegistry {
         });
 
         parser.registerCommand("user-delete", "Удалить пользователя", (scanner, system) -> {
-            System.out.print("Username для удаления: "); String un = scanner.nextLine();
-            System.out.print("Вы уверены? (введите 'да'): ");
-            if (scanner.nextLine().equalsIgnoreCase("да")) {
-                User u = system.getUserManager().findById(un).orElseThrow();
+            String un = ConsoleUtils.promptString(scanner, "Введите username для удаления", true);
 
-                system.getAssignmentManager().findByUser(u).forEach(a -> system.getAssignmentManager().remove(a));
-                system.getUserManager().remove(u);
-                system.getAuditLog().log("USER_DELETE", system.getCurrentUser(), un, "Пользователь полностью удален");
-                System.out.println("Удалено.");
+            if (ConsoleUtils.promptYesNo(scanner, "Вы действительно хотите безвозвратно удалить пользователя " + un + "?")) {
+                User user = system.getUserManager().findById(un).orElseThrow();
+                system.getUserManager().remove(user);
+                System.out.println("Пользователь удален.");
+            } else {
+                System.out.println("Удаление отменено.");
             }
         });
 
@@ -250,25 +252,25 @@ public class CommandRegistry {
         });
 
         parser.registerCommand("assign-role", "Назначить роль", (scanner, system) -> {
-            System.out.print("Username: "); String un = scanner.nextLine();
-            User u = system.getUserManager().findById(un).orElseThrow();
-            System.out.println("Доступные роли: " + system.getRoleManager().findAll().stream().map(Role::getName).toList());
-            System.out.print("Выберите роль: "); String rn = scanner.nextLine();
-            Role r = system.getRoleManager().findByName(rn).orElseThrow();
+            String username = ConsoleUtils.promptString(scanner, "Имя пользователя", true);
+            User user = system.getUserManager().findById(username).orElseThrow();
 
-            System.out.print("Тип (P - постоянное, T - временное): ");
-            String type = scanner.nextLine();
-            System.out.print("Причина: "); String reason = scanner.nextLine();
+            List<Role> roles = system.getRoleManager().findAll();
+            Role role = ConsoleUtils.promptChoice(scanner, "Выберите роль для назначения", roles);
+
+            List<String> types = List.of("PERMANENT (Постоянное)", "TEMPORARY (Временное)");
+            String typeChoice = ConsoleUtils.promptChoice(scanner, "Тип назначения", types);
+
+            String reason = ConsoleUtils.promptString(scanner, "Причина назначения", false);
             AssignmentMetadata meta = AssignmentMetadata.now(system.getCurrentUser(), reason);
 
-            if (type.equalsIgnoreCase("T")) {
-                System.out.print("Дата истечения (YYYY-MM-DD HH:mm): ");
-                String date = scanner.nextLine();
-                system.getAssignmentManager().add(new TemporaryAssignment(u, r, meta, date, false));
+            if (typeChoice.startsWith("TEMPORARY")) {
+                String date = ConsoleUtils.promptString(scanner, "Дата истечения (YYYY-MM-DD)", true);
+                system.getAssignmentManager().add(new TemporaryAssignment(user, role, meta, date, false));
             } else {
-                system.getAssignmentManager().add(new PermanentAssignment(u, r, meta));
+                system.getAssignmentManager().add(new PermanentAssignment(user, role, meta));
             }
-            System.out.println("Назначено.");
+            System.out.println("Роль назначена успешно.");
         });
 
         parser.registerCommand("assignment-list", "Все назначения", (scanner, system) -> {
