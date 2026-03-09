@@ -54,4 +54,10 @@ public class Role {
         }
         return sb.toString();
     }
+
+    public void setName(String newName) {
+    }
+
+    public void setDescription(String newDescription) {
+    }
 }
