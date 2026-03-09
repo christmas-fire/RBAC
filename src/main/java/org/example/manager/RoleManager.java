@@ -112,4 +112,17 @@ public class RoleManager implements Repository<Role> {
     public int hashCode() {
         return Objects.hash(rolesById);
     }
+
+    public void update(String oldName, String newName, String newDescription) {
+        Role role = findByName(oldName).orElseThrow(() -> new IllegalArgumentException("Роль не найдена"));
+
+        if (!oldName.equals(newName) && exists(newName)) {
+            throw new IllegalArgumentException("Роль с именем '" + newName + "' уже существует");
+        }
+
+        rolesByName.remove(oldName);
+        role.setName(newName);
+        role.setDescription(newDescription);
+        rolesByName.put(newName, role);
+    }
 }

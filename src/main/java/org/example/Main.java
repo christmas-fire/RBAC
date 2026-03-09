@@ -1,17 +1,29 @@
 package org.example;
 
-import org.example.model.User;
+import org.example.command.CommandParser;
+import org.example.command.CommandRegistry;
+import org.example.command.RBACSystem;
+
+import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
-        try {
-            User admin = User.validate("Alexander_05", "Alexander Babeshko", "alexander.babeshko@mail.com");
-            System.out.println("User created: " + admin.format());
+        RBACSystem system = new RBACSystem();
+        system.initialize();
 
-            User.validate("абвгд", "", "12345email");
+        CommandParser parser = new CommandParser();
+        CommandRegistry.registerAll(parser);
 
-        } catch (IllegalArgumentException e) {
-            System.err.println("\nValidation error: " + e.getMessage());
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("=== RBAC ===");
+        System.out.println("Logged in as: " + system.getCurrentUser());
+        System.out.println("Type 'help' to see commands.");
+
+        while (true) {
+            System.out.print("\n[" + system.getCurrentUser() + "] > ");
+            String input = scanner.nextLine();
+            parser.parseAndExecute(input, scanner, system);
         }
     }
 }
