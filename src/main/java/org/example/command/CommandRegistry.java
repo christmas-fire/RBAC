@@ -3,6 +3,7 @@ package org.example.command;
 import org.example.filter.*;
 import org.example.model.*;
 import org.example.util.ConsoleUtils;
+import org.example.util.DateUtils;
 import org.example.util.FormatUtils;
 
 import java.util.*;
@@ -557,16 +558,28 @@ public class CommandRegistry {
         System.out.println(FormatUtils.formatTable(headers, rows));
     }
 
-    private static void printAssignmentTable(List<RoleAssignment> list) {
-        String[] headers = {"User", "Role", "Type", "Status", "Assigned At"};
-        List<String[]> rows = list.stream()
-                .map(a -> new String[]{
-                        a.user().username(),
-                        a.role().getName(),
-                        a.assignmentType(),
-                        (a.isActive() ? "ACTIVE" : "EXPIRED/REVOKED"),
-                        a.metadata().assignedAt()
-                }).toList();
+    private static void printAssignmentTable(List<RoleAssignment> assignments) {
+        String[] headers = {"USER", "ROLE", "TYPE", "STATUS", "REMAINING / AGO"};
+
+        List<String[]> rows = assignments.stream()
+                .map(a -> {
+                    String timeInfo;
+                    if (a instanceof TemporaryAssignment ta) {
+                        timeInfo = ta.getTimeRemaining();
+                    } else {
+                        timeInfo = DateUtils.formatRelativeTime(a.metadata().assignedAt());
+                    }
+
+                    return new String[]{
+                            a.user().username(),
+                            a.role().getName(),
+                            a.assignmentType(),
+                            (a.isActive() ? "ACTIVE" : "INACTIVE"),
+                            timeInfo
+                    };
+                })
+                .collect(Collectors.toList());
+
         System.out.println(FormatUtils.formatTable(headers, rows));
     }
 }

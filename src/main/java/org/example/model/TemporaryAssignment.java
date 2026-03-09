@@ -1,22 +1,13 @@
 package org.example.model;
 
-import org.example.util.ValidationUtils;
-
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import org.example.util.DateUtils;
 
 public class TemporaryAssignment extends AbstractRoleAssignment {
     private String expiresAt;
     private final boolean autoRenew;
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     public TemporaryAssignment(User user, Role role, AssignmentMetadata metadata, String expiresAt, boolean autoRenew) {
         super(user, role, metadata);
-
-        if (!ValidationUtils.isValidDate(expiresAt)) {
-            throw new IllegalArgumentException("Дата должна быть в формате YYYY-MM-DD или YYYY-MM-DD HH:mm");
-        }
         this.expiresAt = expiresAt;
         this.autoRenew = autoRenew;
     }
@@ -26,7 +17,13 @@ public class TemporaryAssignment extends AbstractRoleAssignment {
     }
 
     @Override
-    public boolean isActive() { return !isExpired(); }
+    public boolean isActive() {
+        return !isExpired();
+    }
+
+    public boolean isExpired() {
+        return DateUtils.isAfter(DateUtils.getCurrentDateTime(), expiresAt);
+    }
 
     @Override
     public String assignmentType() { return "TEMPORARY"; }
@@ -35,32 +32,13 @@ public class TemporaryAssignment extends AbstractRoleAssignment {
         this.expiresAt = newExpirationDate;
     }
 
-    public boolean isExpired() {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expiry = LocalDateTime.parse(expiresAt, FORMATTER);
-        return now.isAfter(expiry);
-    }
-
+    // Используем относительное время для вывода
     public String getTimeRemaining() {
-        if (isExpired()) {
-            return "Expired";
-        }
-
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expiry = LocalDateTime.parse(expiresAt, FORMATTER);
-        Duration duration = Duration.between(now, expiry);
-
-        long days = duration.toDays();
-        long hours = duration.toHoursPart();
-        long minutes = duration.toMinutesPart();
-
-        return String.format("%d days, %d hours, %d minutes remaining", days, hours, minutes);
+        return DateUtils.formatRelativeTime(expiresAt);
     }
 
     @Override
     public String summary() {
-        return super.summary() +
-                String.format("\nExpires at: %s (%s)", expiresAt, getTimeRemaining()) +
-                "\nAuto-renew: " + (autoRenew ? "Enabled" : "Disabled");
+        return super.summary() + "\nСрок действия: " + expiresAt + " (" + getTimeRemaining() + ")";
     }
 }
