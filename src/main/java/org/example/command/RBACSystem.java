@@ -1,5 +1,6 @@
 package org.example.command;
 
+import org.example.audit.AuditLog;
 import org.example.manager.*;
 import org.example.model.*;
 import java.util.*;
@@ -9,6 +10,8 @@ public class RBACSystem {
     private final UserManager userManager = new UserManager();
     private final RoleManager roleManager = new RoleManager();
     private final AssignmentManager assignmentManager = new AssignmentManager();
+    private final AuditLog auditLog = new AuditLog();
+
     private String currentUser = "system";
 
     public RBACSystem() {
@@ -88,4 +91,5 @@ public class RBACSystem {
         this.currentUser = user;
     }
 
+    public AuditLog getAuditLog() { return auditLog; }
 }

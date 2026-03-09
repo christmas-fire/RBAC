@@ -19,7 +19,8 @@ public class CommandRegistry {
             try {
                 User user = User.validate(un, fn, em);
                 system.getUserManager().add(user);
-                System.out.println("Успех: Пользователь создан.");
+                system.getAuditLog().log("USER_CREATE", system.getCurrentUser(), un, "Создан новый профиль");
+                System.out.println("Пользователь создан.");
             } catch (Exception e) {
                 System.out.println("Ошибка: " + e.getMessage());
             }
@@ -53,7 +54,8 @@ public class CommandRegistry {
 
                 system.getAssignmentManager().findByUser(u).forEach(a -> system.getAssignmentManager().remove(a));
                 system.getUserManager().remove(u);
-                System.out.println("Пользователь и его назначения удалены.");
+                system.getAuditLog().log("USER_DELETE", system.getCurrentUser(), un, "Пользователь полностью удален");
+                System.out.println("Удалено.");
             }
         });
 
@@ -89,6 +91,8 @@ public class CommandRegistry {
                 if (p.length == 3) role.addPermission(new Permission(p[0], p[1], p[2]));
             }
             system.getRoleManager().add(role);
+            system.getAuditLog().log("ROLE_CREATE", system.getCurrentUser(), name, "Создана новая роль в системе");
+            System.out.println("Роль создана.");
         });
 
         parser.registerCommand("role-view", "Просмотр информации о роли", (scanner, system) -> {
@@ -142,6 +146,7 @@ public class CommandRegistry {
             System.out.print("Подтвердить удаление? (да/нет): ");
             if (scanner.nextLine().equalsIgnoreCase("да")) {
                 system.getRoleManager().remove(role);
+                system.getAuditLog().log("ROLE_DELETE", system.getCurrentUser(), name, "Роль удалена");
                 System.out.println("Роль удалена.");
             }
         });
@@ -281,7 +286,8 @@ public class CommandRegistry {
             System.out.print("Номер для отзыва: ");
             int idx = Integer.parseInt(scanner.nextLine());
             system.getAssignmentManager().revokeAssignment(active.get(idx).assignmentId());
-            System.out.println("Отозвано.");
+            system.getAuditLog().log("REVOKE_ROLE", system.getCurrentUser(), un, "Отозвана роль");
+            System.out.println("Роль отозвана.");
         });
 
         parser.registerCommand("assignment-list-user", "Назначения конкретного пользователя", (scanner, system) -> {
@@ -449,6 +455,38 @@ public class CommandRegistry {
         parser.registerCommand("exit", "Выход", (scanner, system) -> {
             System.out.print("Выйти? (да/нет): ");
             if (scanner.nextLine().equalsIgnoreCase("да")) System.exit(0);
+        });
+
+        parser.registerCommand("audit-log", "Просмотр журнала действий (аудит)", (scanner, system) -> {
+            System.out.println("\nВыберите режим:");
+            System.out.println("1. Показать все записи");
+            System.out.println("2. Фильтр по исполнителю (кто делал)");
+            System.out.println("3. Фильтр по действию");
+            System.out.println("4. Сохранить лог в файл");
+            System.out.print("> ");
+
+            String choice = scanner.nextLine();
+            switch (choice) {
+                case "1" -> system.getAuditLog().printLog();
+                case "2" -> {
+                    System.out.print("Введите имя исполнителя: ");
+                    String perf = scanner.nextLine();
+                    List<org.example.rbac.audit.AuditEntry> entries = system.getAuditLog().getByPerformer(perf);
+                    entries.forEach(e -> System.out.println(e));
+                }
+                case "3" -> {
+                    System.out.print("Введите действие (напр. USER_CREATE): ");
+                    String act = scanner.nextLine();
+                    List<org.example.rbac.audit.AuditEntry> entries = system.getAuditLog().getByAction(act);
+                    entries.forEach(e -> System.out.println(e));
+                }
+                case "4" -> {
+                    System.out.print("Введите имя файла (напр. audit.log): ");
+                    String file = scanner.nextLine();
+                    system.getAuditLog().saveToFile(file);
+                }
+                default -> System.out.println("Неверный выбор.");
+            }
         });
     }
 
