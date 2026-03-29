@@ -4,6 +4,7 @@ import org.example.model.Role;
 import org.example.model.RoleAssignment;
 import org.example.model.TemporaryAssignment;
 import org.example.model.User;
+import org.example.util.DateUtils;
 
 public class AssignmentFilters {
     public static AssignmentFilter byUser(User user) {
@@ -39,13 +40,13 @@ public class AssignmentFilters {
     }
 
     public static AssignmentFilter assignedAfter(String date) {
-        return a -> a.metadata().assignedAt().compareTo(date) > 0;
+        return a -> DateUtils.isAfter(a.metadata().assignedAt(), date);
     }
 
     public static AssignmentFilter expiringBefore(String date) {
         return a -> {
             if (a instanceof TemporaryAssignment temp) {
-                return temp.getExpiresAt().compareTo(date) < 0;
+                return DateUtils.isBefore(temp.getExpiresAt(), date);
             }
             return false;
         };

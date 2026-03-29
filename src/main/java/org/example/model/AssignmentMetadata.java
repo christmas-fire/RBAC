@@ -1,11 +1,12 @@
 package org.example.model;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import org.example.util.DateUtils;
 
-public record AssignmentMetadata(String assignedBy, String assignedAt, String reason) {
+import java.io.Serializable;
+
+public record AssignmentMetadata(String assignedBy, String assignedAt, String reason) implements Serializable {
     public static AssignmentMetadata now(String assignedBy, String reason) {
-        String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        String now = DateUtils.getCurrentDateTimeNoSeconds();
         return new AssignmentMetadata(assignedBy, now, reason);
     }
 
