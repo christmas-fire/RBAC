@@ -3,7 +3,7 @@ package org.example.model;
 import org.example.util.DateUtils;
 
 public class TemporaryAssignment extends AbstractRoleAssignment {
-    private String expiresAt;
+    private volatile String expiresAt;
     private final boolean autoRenew;
 
     public TemporaryAssignment(User user, Role role, AssignmentMetadata metadata, String expiresAt, boolean autoRenew) {
@@ -28,7 +28,7 @@ public class TemporaryAssignment extends AbstractRoleAssignment {
     @Override
     public String assignmentType() { return "TEMPORARY"; }
 
-    public void extend(String newExpirationDate) {
+    public synchronized void extend(String newExpirationDate) {
         this.expiresAt = newExpirationDate;
     }
 

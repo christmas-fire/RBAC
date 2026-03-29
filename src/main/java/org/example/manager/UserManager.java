@@ -5,13 +5,14 @@ import org.example.model.User;
 import org.example.repository.Repository;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class UserManager implements Repository<User> {
-    private final Map<String, User> users = new HashMap<>();
+    private final Map<String, User> users = new ConcurrentHashMap<>();
 
     @Override
-    public void add(User user) {
+    public synchronized void add(User user) {
         if (exists(user.username())) {
             throw new IllegalArgumentException("Пользователь с именем " + user.username() + " уже существует.");
         }
@@ -20,7 +21,7 @@ public class UserManager implements Repository<User> {
     }
 
     @Override
-    public boolean remove(User user) {
+    public synchronized boolean remove(User user) {
         if (!exists(user.username())) {
             throw new IllegalArgumentException("Пользователь не найден: " + user.username());
         }
@@ -74,7 +75,7 @@ public class UserManager implements Repository<User> {
         return users.containsKey(username);
     }
 
-    public void update(String username, String newFullName, String newEmail) {
+    public synchronized void update(String username, String newFullName, String newEmail) {
         if (!exists(username)) {
             throw new IllegalArgumentException("Ошибка обновления. Пользователь " + username + " не существует.");
         }

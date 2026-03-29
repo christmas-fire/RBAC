@@ -6,12 +6,13 @@ import org.example.model.Role;
 import org.example.repository.Repository;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class RoleManager implements Repository<Role> {
-    private final Map<String, Role> rolesById = new HashMap<>();
-    private final Map<String, Role> rolesByName = new HashMap<>();
+    private final Map<String, Role> rolesById = new ConcurrentHashMap<>();
+    private final Map<String, Role> rolesByName = new ConcurrentHashMap<>();
 
     private Predicate<Role> assignmentChecker = role -> false;
 
@@ -20,17 +21,16 @@ public class RoleManager implements Repository<Role> {
     }
 
     @Override
-    public void add(Role role) {
+    public synchronized void add(Role role) {
         if (exists(role.getName())) {
             throw new IllegalArgumentException("Роль с именем '" + role.getName() + "' уже существует.");
         }
-        // ЗАДАЧА 3: Синхронизация двух Map
         rolesById.put(role.getId(), role);
         rolesByName.put(role.getName(), role);
     }
 
     @Override
-    public boolean remove(Role role) {
+    public synchronized boolean remove(Role role) {
         if (role == null) return false;
 
         if (assignmentChecker.test(role)) {
@@ -57,7 +57,7 @@ public class RoleManager implements Repository<Role> {
     }
 
     @Override
-    public void clear() {
+    public synchronized void clear() {
         rolesById.clear();
         rolesByName.clear();
     }
@@ -113,7 +113,7 @@ public class RoleManager implements Repository<Role> {
         return Objects.hash(rolesById);
     }
 
-    public void update(String oldName, String newName, String newDescription) {
+    public synchronized void update(String oldName, String newName, String newDescription) {
         Role role = findByName(oldName).orElseThrow(() -> new IllegalArgumentException("Роль не найдена"));
 
         if (!oldName.equals(newName) && exists(newName)) {
