@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -23,11 +24,35 @@ public class RBACSystem implements Serializable {
     private final transient ReportGenerator reportGenerator = new ReportGenerator();
 
     private final transient ExecutorService executor = Executors.newCachedThreadPool();
+    private final transient ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     private String currentUser = "system";
 
     public RBACSystem() {
         connectManagers();
+        startPeriodicTasks();
+    }
+
+    private void startPeriodicTasks() {
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                List<RoleAssignment> expiredAssignments = assignmentManager.getExpiredAssignments();
+                if (!expiredAssignments.isEmpty()) {
+                    String expiredIds = expiredAssignments.stream()
+                            .map(RoleAssignment::assignmentId)
+                            .collect(Collectors.joining(", "));
+                    auditLog.log("BACKGROUND_JOB", "system", "ExpiredAssignments",
+                            "Found " + expiredAssignments.size() + " expired assignments: " + expiredIds);
+                }
+
+                String stats = generateStatistics();
+                auditLog.log("BACKGROUND_JOB", "system", "SystemStats", stats.replace('\n', ' '));
+
+            } catch (Exception e) {
+                System.err.println("Error in periodic background task: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }, 30, 60, TimeUnit.SECONDS); // Initial delay 30s, then every 60s
     }
 
     private void connectManagers() {
@@ -42,13 +67,18 @@ public class RBACSystem implements Serializable {
 
     public void shutdown() {
         System.out.println("Shutting down background services...");
+        scheduler.shutdown();
         executor.shutdown();
         auditLog.stop();
         try {
+            if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                scheduler.shutdownNow();
+            }
             if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
                 executor.shutdownNow();
             }
         } catch (InterruptedException e) {
+            scheduler.shutdownNow();
             executor.shutdownNow();
         }
         System.out.println("Shutdown complete.");
