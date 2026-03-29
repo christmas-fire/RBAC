@@ -5,11 +5,12 @@ import org.example.filter.AssignmentFilter;
 import org.example.repository.Repository;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class AssignmentManager implements Repository<RoleAssignment> {
-    private final Map<String, RoleAssignment> assignments = new HashMap<>();
+    private final Map<String, RoleAssignment> assignments = new ConcurrentHashMap<>();
 
     private Predicate<User> userExistsChecker = u -> true;
     private Predicate<Role> roleExistsChecker = r -> true;
@@ -20,7 +21,7 @@ public class AssignmentManager implements Repository<RoleAssignment> {
     }
 
     @Override
-    public void add(RoleAssignment assignment) {
+    public synchronized void add(RoleAssignment assignment) {
         if (assignment == null) throw new IllegalArgumentException("Назначение не может быть null");
 
         if (!userExistsChecker.test(assignment.user())) {
@@ -123,7 +124,7 @@ public class AssignmentManager implements Repository<RoleAssignment> {
                 .collect(Collectors.toSet());
     }
 
-    public void revokeAssignment(String assignmentId) {
+    public synchronized void revokeAssignment(String assignmentId) {
         RoleAssignment a = findById(assignmentId)
                 .orElseThrow(() -> new IllegalArgumentException("Назначение не найдено: " + assignmentId));
 
@@ -134,7 +135,7 @@ public class AssignmentManager implements Repository<RoleAssignment> {
         }
     }
 
-    public void extendTemporaryAssignment(String assignmentId, String newExpirationDate) {
+    public synchronized void extendTemporaryAssignment(String assignmentId, String newExpirationDate) {
         RoleAssignment a = findById(assignmentId)
                 .orElseThrow(() -> new IllegalArgumentException("Назначение не найдено: " + assignmentId));
 

@@ -1,13 +1,13 @@
 package org.example.model;
 
 public class PermanentAssignment extends AbstractRoleAssignment {
-    private boolean revoked = false;
+    private volatile boolean revoked = false;
 
     public PermanentAssignment(User user, Role role, AssignmentMetadata metadata) {
         super(user, role, metadata);
     }
 
-    public void revoke() { this.revoked = true; }
+    public synchronized void revoke() { this.revoked = true; }
 
     public boolean isRevoked() { return revoked; }
 

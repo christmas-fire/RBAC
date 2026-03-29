@@ -5,9 +5,9 @@ import java.util.*;
 public class Role {
     private static int counter = 1;
     private final String id;
-    private final String name;
+    private String name;
     private String description;
-    private final Set<Permission> permissions = new HashSet<>();
+    private final Set<Permission> permissions = Collections.synchronizedSet(new HashSet<>());
 
     public Role(String name, String description) {
         this.id = "role_" + (counter++);
@@ -15,9 +15,9 @@ public class Role {
         this.description = description;
     }
 
-    public void addPermission(Permission p) { permissions.add(p); }
+    public synchronized void addPermission(Permission p) { permissions.add(p); }
 
-    public void removePermission(Permission p) { permissions.remove(p); }
+    public synchronized void removePermission(Permission p) { permissions.remove(p); }
 
     public boolean hasPermission(Permission p) { return permissions.contains(p); }
 
@@ -49,15 +49,19 @@ public class Role {
         sb.append(String.format("Role: %s [ID: %s]\n", name, id));
         sb.append(String.format("Description: %s\n", description));
         sb.append(String.format("Permissions (%d):\n", permissions.size()));
-        for (Permission p : permissions) {
-            sb.append(" - ").append(p.format()).append("\n");
+        synchronized (permissions) {
+            for (Permission p : permissions) {
+                sb.append(" - ").append(p.format()).append("\n");
+            }
         }
         return sb.toString();
     }
 
-    public void setName(String newName) {
+    public synchronized void setName(String newName) {
+        this.name = newName;
     }
 
-    public void setDescription(String newDescription) {
+    public synchronized void setDescription(String newDescription) {
+        this.description = newDescription;
     }
 }
