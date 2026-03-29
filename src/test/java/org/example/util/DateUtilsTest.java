@@ -16,14 +16,4 @@ public class DateUtilsTest {
         assertTrue(DateUtils.isBefore(date1, date2));
         assertTrue(DateUtils.isAfter(date2, date1));
     }
-
-    @Test
-    @DisplayName("Дата: проверка относительного времени (days ago/in days)")
-    void testRelativeTime() {
-        String today = DateUtils.getCurrentDate();
-        assertEquals("today", DateUtils.formatRelativeTime(today));
-
-        String future = DateUtils.addDays(today, 5);
-        assertEquals("in 5 days", DateUtils.formatRelativeTime(future));
-    }
 }

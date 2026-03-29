@@ -1,10 +1,10 @@
 package org.example.audit;
 
+import org.example.util.DateUtils;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -19,8 +19,6 @@ public class AuditLog {
         t.setDaemon(true);
         return t;
     });
-
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public AuditLog() {
         start();
@@ -63,7 +61,7 @@ public class AuditLog {
 
 
     public void log(String action, String performer, String target, String details) {
-        String now = LocalDateTime.now().format(FORMATTER);
+        String now = DateUtils.getCurrentDateTime();
         AuditEntry entry = new AuditEntry(now, action, performer, target, details);
         logQueue.offer(entry);
     }
