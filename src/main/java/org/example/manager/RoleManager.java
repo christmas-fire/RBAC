@@ -5,12 +5,13 @@ import org.example.model.Permission;
 import org.example.model.Role;
 import org.example.repository.Repository;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class RoleManager implements Repository<Role> {
+public class RoleManager implements Repository<Role>, Serializable {
     private final Map<String, Role> rolesById = new ConcurrentHashMap<>();
     private final Map<String, Role> rolesByName = new ConcurrentHashMap<>();
 
@@ -68,6 +69,12 @@ public class RoleManager implements Repository<Role> {
 
     public List<Role> findByFilter(RoleFilter filter) {
         return rolesById.values().stream()
+                .filter(filter::test)
+                .collect(Collectors.toList());
+    }
+
+    public List<Role> findByFilterParallel(RoleFilter filter) {
+        return rolesById.values().parallelStream()
                 .filter(filter::test)
                 .collect(Collectors.toList());
     }

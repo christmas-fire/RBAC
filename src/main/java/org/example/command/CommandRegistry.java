@@ -480,9 +480,19 @@ public class CommandRegistry {
         parser.registerCommand("exit", "Выход из программы", (scanner, system) -> {
             if (ConsoleUtils.promptYesNo(scanner, "Вы действительно хотите выйти?")) {
                 System.out.println("Завершение работы...");
+                system.shutdown();
                 System.exit(0);
             }
         });
+
+        parser.registerCommand("report-users-async", "Асинхронный отчет по пользователям",
+                (scanner, system) -> system.reportUsersAsync());
+
+        parser.registerCommand("save-async", "Асинхронное сохранение состояния", (scanner, system) -> {
+            String file = ConsoleUtils.promptString(scanner, "Имя файла для сохранения", true);
+            system.saveStateAsync(file);
+        });
+
 
         parser.registerCommand("audit-log", "Просмотр журнала действий (аудит)", (scanner, system) -> {
             System.out.println("\nВыберите режим:");

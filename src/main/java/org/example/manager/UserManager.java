@@ -4,11 +4,12 @@ import org.example.filter.UserFilter;
 import org.example.model.User;
 import org.example.repository.Repository;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-public class UserManager implements Repository<User> {
+public class UserManager implements Repository<User>, Serializable {
     private final Map<String, User> users = new ConcurrentHashMap<>();
 
     @Override
@@ -60,6 +61,12 @@ public class UserManager implements Repository<User> {
 
     public List<User> findByFilter(UserFilter filter) {
         return users.values().stream()
+                .filter(filter::test)
+                .collect(Collectors.toList());
+    }
+
+    public List<User> findByFilterParallel(UserFilter filter) {
+        return users.values().parallelStream()
                 .filter(filter::test)
                 .collect(Collectors.toList());
     }

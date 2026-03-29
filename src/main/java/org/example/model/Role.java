@@ -1,8 +1,9 @@
 package org.example.model;
 
+import java.io.Serializable;
 import java.util.*;
 
-public class Role {
+public class Role implements Serializable {
     private static int counter = 1;
     private final String id;
     private String name;

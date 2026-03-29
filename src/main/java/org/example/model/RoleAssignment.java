@@ -1,6 +1,8 @@
 package org.example.model;
 
-public interface RoleAssignment {
+import java.io.Serializable;
+
+public interface RoleAssignment extends Serializable {
     String assignmentId();
     User user();
     Role role();
