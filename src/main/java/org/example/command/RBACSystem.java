@@ -5,19 +5,32 @@ import org.example.manager.*;
 import org.example.model.*;
 import org.example.report.ReportGenerator;
 
-import java.util.*;
+import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-public class RBACSystem {
+public class RBACSystem implements Serializable {
     private final UserManager userManager = new UserManager();
     private final RoleManager roleManager = new RoleManager();
     private final AssignmentManager assignmentManager = new AssignmentManager();
-    private final AuditLog auditLog = new AuditLog();
-    private final ReportGenerator reportGenerator = new ReportGenerator();
+    private final transient AuditLog auditLog = new AuditLog();
+    private final transient ReportGenerator reportGenerator = new ReportGenerator();
+
+    private final transient ExecutorService executor = Executors.newCachedThreadPool();
 
     private String currentUser = "system";
 
     public RBACSystem() {
+        connectManagers();
+    }
+
+    private void connectManagers() {
         roleManager.setAssignmentChecker(role ->
                 assignmentManager.findAll().stream().anyMatch(a -> a.role().equals(role) && a.isActive())
         );
@@ -25,6 +38,41 @@ public class RBACSystem {
                 u -> userManager.exists(u.username()),
                 r -> roleManager.exists(r.getName())
         );
+    }
+
+    public void shutdown() {
+        System.out.println("Shutting down background services...");
+        executor.shutdown();
+        auditLog.stop();
+        try {
+            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+        }
+        System.out.println("Shutdown complete.");
+    }
+
+    public void reportUsersAsync() {
+        System.out.println("Запуск генерации отчёта в фоновом режиме...");
+        executor.submit(() -> {
+            String report = reportGenerator.generateUserReportParallel(userManager, assignmentManager);
+            System.out.println("\n--- АСИНХРОННЫЙ ОТЧЁТ ГОТОВ ---\n" + report + "\n---------------------------------\n");
+        });
+    }
+
+    public void saveStateAsync(String filename) {
+        System.out.println("Запуск сохранения состояния в фоновом режиме...");
+        executor.submit(() -> {
+            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename))) {
+                oos.writeObject(this);
+                System.out.println("Состояние системы успешно сохранено в " + filename);
+            } catch (Exception e) {
+                System.err.println("Ошибка при сохранении состояния: " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
     }
 
     public void initialize() {

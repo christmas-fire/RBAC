@@ -1,8 +1,9 @@
 package org.example.model;
 
+import java.io.Serializable;
 import org.example.util.ValidationUtils;
 
-public record User(String username, String fullName, String email) {
+public record User(String username, String fullName, String email) implements Serializable {
 
     public static User validate(String username, String fullName, String email) {
         ValidationUtils.requireNonEmpty(username, "Username");

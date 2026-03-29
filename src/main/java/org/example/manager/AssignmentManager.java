@@ -4,12 +4,13 @@ import org.example.model.*;
 import org.example.filter.AssignmentFilter;
 import org.example.repository.Repository;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class AssignmentManager implements Repository<RoleAssignment> {
+public class AssignmentManager implements Repository<RoleAssignment>, Serializable {
     private final Map<String, RoleAssignment> assignments = new ConcurrentHashMap<>();
 
     private Predicate<User> userExistsChecker = u -> true;
@@ -83,6 +84,12 @@ public class AssignmentManager implements Repository<RoleAssignment> {
 
     public List<RoleAssignment> findByFilter(AssignmentFilter filter) {
         return assignments.values().stream()
+                .filter(filter::test)
+                .collect(Collectors.toList());
+    }
+
+    public List<RoleAssignment> findByFilterParallel(AssignmentFilter filter) {
+        return assignments.values().parallelStream()
                 .filter(filter::test)
                 .collect(Collectors.toList());
     }
